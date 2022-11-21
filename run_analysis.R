@@ -46,3 +46,41 @@ combined <- reshape2::melt(data = combined, id = c("SubjectNum", "Activity"))
 combined <- reshape2::dcast(data = combined, SubjectNum + Activity ~ variable, fun.aggregate = mean)
 
 data.table::fwrite(x = combined, file = "tidyData.txt", quote = FALSE)
+
+#Subset Name of Features by measurements on the mean and standard deviation
+subdataFeaturesNames<-dataFeaturesNames$V2[grep("mean\\(\\)|std\\(\\)", dataFeaturesNames$V2)]
+
+selectedNames<-c(as.character(subdataFeaturesNames), "subject", "activity" )
+Data<-subset(Data,select=selectedNames)
+
+str(Data)
+
+#Read descriptive activity names from “activity_labels.txt”
+activityLabels <- read.table(file.path(path_rf, "activity_labels.txt"),header = FALSE)
+head(Data$activity,30)
+
+#Appropriately labels the data set with descriptive variable names
+
+names(Data)<-gsub("^t", "time", names(Data))
+names(Data)<-gsub("^f", "frequency", names(Data))
+names(Data)<-gsub("Acc", "Accelerometer", names(Data))
+names(Data)<-gsub("Gyro", "Gyroscope", names(Data))
+names(Data)<-gsub("Mag", "Magnitude", names(Data))
+names(Data)<-gsub("BodyBody", "Body", names(Data))
+
+#to check
+
+names(Data)
+
+#Create a second, independent tidy data set 
+
+library(plyr);
+Data2<-aggregate(. ~subject + activity, Data, mean)
+Data2<-Data2[order(Data2$subject,Data2$activity),]
+write.table(Data2, file = "tidydata.txt",row.name=FALSE)
+
+#Codebook
+
+library(knitr)
+knit2html("codebook.Rmd");
+
